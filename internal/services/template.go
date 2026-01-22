@@ -24,12 +24,12 @@ func NewTemplateService(templatesDir string, gotenbergURL string) *TemplateServi
 	}
 }
 
-func (s *TemplateService) GetAll() ([]domain.GetAllTemplateResponse, *domain.AppError) {
+func (s *TemplateService) GetAll() ([]domain.GetAllTemplateResponse, error) {
 	var templates []domain.GetAllTemplateResponse
 
 	entries, err := os.ReadDir(s.templatesDir)
 	if err != nil {
-		return nil, domain.InternalServerError("Some error occurred, please try again")
+		return nil, err
 	}
 
 	for _, entry := range entries {
@@ -46,7 +46,7 @@ func (s *TemplateService) GetAll() ([]domain.GetAllTemplateResponse, *domain.App
 	return templates, nil
 }
 
-func (s *TemplateService) GetByName(name string) (*domain.Template, *domain.AppError) {
+func (s *TemplateService) GetByName(name string) (*domain.Template, error) {
 	content, err := s.getTemplateContent(name)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (s *TemplateService) GetByName(name string) (*domain.Template, *domain.AppE
 	return &domain.Template{Name: name, Content: content}, nil
 }
 
-func (s *TemplateService) RenderHTML(name string, data map[string]any) (string, *domain.AppError) {
+func (s *TemplateService) RenderHTML(name string, data map[string]any) (string, error) {
 	content, appErr := s.getTemplateContent(name)
 	if appErr != nil {
 		return "", appErr
@@ -64,13 +64,13 @@ func (s *TemplateService) RenderHTML(name string, data map[string]any) (string, 
 	engine := liquid.NewEngine()
 	out, renderErr := engine.ParseAndRenderString(content, data)
 	if renderErr != nil {
-		return "", domain.InternalServerError("Failed to render template")
+		return "", renderErr
 	}
 
 	return out, nil
 }
 
-func (s *TemplateService) RenderPDF(name string, data map[string]any, opts pdfgen.PDFOptions) ([]byte, *domain.AppError) {
+func (s *TemplateService) RenderPDF(name string, data map[string]any, opts pdfgen.PDFOptions) ([]byte, error) {
 	content, appErr := s.getTemplateContent(name)
 	if appErr != nil {
 		return nil, appErr
@@ -79,18 +79,18 @@ func (s *TemplateService) RenderPDF(name string, data map[string]any, opts pdfge
 	engine := liquid.NewEngine()
 	html, renderErr := engine.ParseAndRenderString(content, data)
 	if renderErr != nil {
-		return nil, domain.InternalServerError("Failed to render template")
+		return nil, renderErr
 	}
 
 	pdf, pdfErr := s.pdfGenerator.GeneratePDF(html, opts)
 	if pdfErr != nil {
-		return nil, domain.InternalServerError("Failed to generate PDF")
+		return nil, pdfErr
 	}
 
 	return pdf, nil
 }
 
-func (s *TemplateService) getTemplateContent(name string) (string, *domain.AppError) {
+func (s *TemplateService) getTemplateContent(name string) (string, error) {
 	filePath := filepath.Join(s.templatesDir, name)
 
 	content, err := os.ReadFile(filePath)

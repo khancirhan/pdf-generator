@@ -46,6 +46,9 @@ func (c *GotenbergPDFGenerator) GeneratePDF(html string, opts PDFOptions) ([]byt
 	writer.WriteField("preferCssPageSize", fmt.Sprintf("%t", opts.PreferCSSPageSize))
 	writer.WriteField("landscape", fmt.Sprintf("%t", opts.Landscape))
 
+	// Always wait for network idle
+	writer.WriteField("skipNetworkIdleEvent", "false")
+
 	if opts.WaitDelay != "" {
 		writer.WriteField("waitDelay", opts.WaitDelay)
 	}

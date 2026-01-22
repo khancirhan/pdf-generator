@@ -22,7 +22,7 @@ func Errorhandler() gin.HandlerFunc {
 				return
 			}
 
-			log.Fatalf("Error: %v", err)
+			log.Printf("Error: %v", err)
 
 			// Default to 500 for unknown errors
 			ctx.JSON(http.StatusInternalServerError, gin.H{
